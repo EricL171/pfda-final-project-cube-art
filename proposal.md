@@ -30,12 +30,12 @@ Minimal Viable Outcome:
 ## Milestones
 
 - Week 1 (Nov 5)
-  1. Learn and understand projection mapping for class Cube()
-  2. Implement class Cube(). The program should display a rotating cube by the end of the week.
+  1. Learn and understand projection mapping for class `Cube()`
+  2. Implement class `Cube()`. The program should display a rotating cube by the end of the week.
   2. Create function main(). main() must initialize pygame, all elements of the screen and the game loop, and have a clock.
 
 - Week 2 (Nov 12)
-  1. Implement at least 2 different methods for creating artwork with Cube()
+  1. Implement at least 2 different methods for creating artwork with `Cube()`
   2. Add keyboard input functionality to change the artwork displayed.
   3. Review scope and goals for artwork creation.
 
