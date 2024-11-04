@@ -1,4 +1,4 @@
-#Cube Art
+# Cube Art
 
 ## Repository
 https://github.com/EricL171/pfda-final-project-cube-art.git
