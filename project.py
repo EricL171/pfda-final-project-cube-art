@@ -13,17 +13,50 @@ class Cube():
         self.surface = pygame.Surface((self.size, self.size))
         self.surface.set_colorkey((255, 255, 255))
 
-        self.projection_matrix = numpy.matrix([[1, 0, 0], [0, 1, 0]])
+        self.projection_matrix = numpy.matrix([[1, 0, 0], [0, 1, 0], [0,0,0]])
 
         self.vert_pos = [self.size, self.size]
 
     def update(self):
         """
+        https://en.wikipedia.org/wiki/Projection_(linear_algebra)
         Projection will need the dot product of the rotation matrices representing yaw(x), pitch(y), and roll(z) into
-        the general rotation matrix rmatrix_xyz. 
+        the general rotation matrix rmatrix_xyz. The position of the vertices in 2d will be the dot product of
+        the general rotation matrix and the projection matrix
         Numpy will be used to help handle matrix operations with dot product method.
         """
+
     
+    def calc_rotation(self, angle):
+
+        """
+        From https://math.libretexts.org/Bookshelves/Applied_Mathematics/Mathematics_for_Game_Developers_(Burzynski)/04%3A_Matrices/4.06%3A_Rotation_Matrices_in_3-Dimensions
+        Rotation matrices must be defined.
+        """
+        self.r_mod = [math.sin(angle), math.cos(angle)]
+
+        ##Gamma, yaw
+        self.rmatrix_x = numpy.matrix([
+            [1,             0,              0],
+            [0, self.r_mod[1], -self.r_mod[0]],
+            [0, self.r_mod[0], self.r_mod[1]],
+        ])
+
+        ##Beta, pitch
+        self.rmatrix_y = numpy.matrix([
+            [self.r_mod[1],  0, self.r_mod[0]],
+            [0,              1,             0],
+            [-self.r_mod[0], 0, self.r_mod[1]],
+        ])
+        
+        ##Alpha, roll
+        self.rmatrix_z = numpy.matrix([
+            [self.r_mod[1], -self.r_mod[0], 0],
+            [self.r_mod[0], self.r_mod[1],  0],
+            [0,                         0,  1],
+        ])  
+
+
     def assign_root_verts(self):
 
         for i in range(0, 2):
