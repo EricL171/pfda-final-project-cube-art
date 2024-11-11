@@ -2,6 +2,41 @@ import pygame
 import numpy
 import math
 
+class Cube():
+    def __init__(self, size, pos):
+        self.size = size
+        self.pos = pos
+
+        self.root_verts = []
+        self.assign_root_verts()
+
+        self.surface = pygame.Surface((self.size, self.size))
+        self.surface.set_colorkey((255, 255, 255))
+
+        self.projection_matrix = numpy.matrix([[1, 0, 0], [0, 1, 0]])
+
+        self.vert_pos = [self.size, self.size]
+
+    def update(self):
+        """
+        Projection will need the dot product of the rotation matrices representing yaw(x), pitch(y), and roll(z) into
+        the general rotation matrix rmatrix_xyz. 
+        Numpy will be used to help handle matrix operations with dot product method.
+        """
+    
+    def assign_root_verts(self):
+
+        for i in range(0, 2):
+            for j in range(0, 2):
+                for k in range(0, 2):
+                    x = int(math.pow(-1, i))
+                    y = int(math.pow(-1, j))
+                    z = int(math.pow(-1, k))
+
+                    self.root_verts.append(numpy.matrix([x, y, z]))
+                    print(f"{self.root_verts}")
+
+
 def main():
     pygame.init()
 
@@ -11,6 +46,8 @@ def main():
     resolution = (800, 600)
     screen = pygame.display.set_mode(resolution)
 
+
+    cube = Cube(100, 100)
     white = pygame.Color(255, 255, 255)
     running = True
     while running:
@@ -26,6 +63,7 @@ def main():
 
         ##rain.update(dt)
         
+
         screen.fill(white)
         ##rain.draw(screen)
 
