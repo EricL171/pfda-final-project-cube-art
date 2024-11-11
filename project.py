@@ -18,6 +18,7 @@ class Cube():
         self.projection_matrix = numpy.matrix([[1, 0, 0], [0, 1, 0], [0,0,0]])
 
         self.vert_pos = [self.size, self.size]
+        self.projected_points = []
 
     def update(self):
         """
@@ -85,6 +86,14 @@ class Cube():
 
                     self.root_verts.append(numpy.matrix([x, y, z]))
                     ##print(f"{self.root_verts}")
+
+    """
+    The process of drawing the cube will be to take a corner, draw three lines that converge on it
+    Repeat for any unique corners that don't cover existing lines
+    """
+
+    def draw_cube(self):
+        self.surface.fill((255,255,255))
 
 
 def main():
