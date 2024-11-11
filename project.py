@@ -12,13 +12,18 @@ class Cube():
         self.root_verts = []
         self.assign_root_verts()
 
-        self.surface = pygame.Surface((self.size, self.size))
-        self.surface.set_colorkey((255, 255, 255))
+        self.surface = pygame.Surface((2 * math.sqrt(3) * self.size, 2 * math.sqrt(3) * self.size))
+        ##self.surface.set_colorkey((255, 255, 255))
 
         self.projection_matrix = numpy.matrix([[1, 0, 0], [0, 1, 0], [0,0,0]])
 
-        self.vert_pos = [self.size, self.size]
+        self.vert_pos = [math.sqrt(3) * self.size, math.sqrt(3) * self.size]
+        
         self.projected_points = []
+        for i in range(len(self.root_verts)):
+            self.projected_points.append([i,0])
+
+        ##print(f"Projection {self.projected_points}")
 
     def update(self):
         """
@@ -27,20 +32,32 @@ class Cube():
         the general rotation matrix rmatrix_xyz. The position of the vertices in 2d will be the dot product of
         the general rotation matrix and the projection matrix
         Numpy will be used to help handle matrix operations with dot product method.
+        For clarity purposes, all rotation matrices are named as matrices and are not related to coding matrices or arrays.
         """
         self.calc_rotation(self.angle)
+        ##print(f"{self.angle}")
 
-
+        i = 0
         for point in self.root_verts:
             
             rmatrix_xyz = numpy.dot(self.rmatrix_z, point.reshape((3, 1)))
             rmatrix_xyz = numpy.dot(self.rmatrix_y, rmatrix_xyz)
             rmatrix_xyz = numpy.dot(self.rmatrix_x, rmatrix_xyz)
 
-            print(f"General rotation matrix: {rmatrix_xyz}")
+            ##print(f"General rotation matrix: {rmatrix_xyz}")
             points_2d = numpy.dot(self.projection_matrix, rmatrix_xyz)
-            print(f"Points 2d matrix: {points_2d}")
+            ##print(f"{points_2d[0][0]}")
+            ##print(f"Points 2d matrix: {points_2d}")
 
+            
+            ##print(f"points {points_2d[0][0]}")
+            x = int(points_2d[0][0].item() * self.size) + self.vert_pos[0]
+            y = int(points_2d[1][0].item() * self.size) + self.vert_pos[1]
+            
+            ##print(f"x {x}, y {y}, x_1 {x_1}, y_1 {y_1}")
+
+            self.projected_points[i] = [x, y]
+            i += 1
         self.angle += 0.001
         self.age += 0.001
 
@@ -50,30 +67,33 @@ class Cube():
         From https://math.libretexts.org/Bookshelves/Applied_Mathematics/Mathematics_for_Game_Developers_(Burzynski)/04%3A_Matrices/4.06%3A_Rotation_Matrices_in_3-Dimensions
         Rotation matrices must be defined.
         """
-        self.r_mod = [math.sin(angle), math.cos(angle)]
+        
+        self.rotate_x(angle)
+        self.rotate_y(angle)
+        self.rotate_z(angle)
 
+    def rotate_x(self, angle):
         ##Gamma, yaw
         self.rmatrix_x = numpy.matrix([
-            [1,             0,              0],
-            [0, self.r_mod[1], -self.r_mod[0]],
-            [0, self.r_mod[0], self.r_mod[1]],
+            [1,               0,                0],
+            [0, math.cos(angle), -math.sin(angle)],
+            [0, math.sin(angle), math.cos(angle)],
         ])
-
+    def rotate_y(self, angle):
         ##Beta, pitch
         self.rmatrix_y = numpy.matrix([
-            [self.r_mod[1],  0, self.r_mod[0]],
-            [0,              1,             0],
-            [-self.r_mod[0], 0, self.r_mod[1]],
+            [math.cos(angle),  0, math.sin(angle)],
+            [0,                1,               0],
+            [-math.sin(angle), 0, math.cos(angle)],
         ])
         
+    def rotate_z(self, angle):
         ##Alpha, roll
         self.rmatrix_z = numpy.matrix([
-            [self.r_mod[1], -self.r_mod[0], 0],
-            [self.r_mod[0], self.r_mod[1],  0],
-            [0,                         0,  1],
+            [math.cos(angle), -math.sin(angle), 0],
+            [math.sin(angle), math.cos(angle),  0],
+            [0,                         0,      1],
         ])  
-
-        
 
     def assign_root_verts(self):
 
@@ -85,15 +105,17 @@ class Cube():
                     z = int(math.pow(-1, k))
 
                     self.root_verts.append(numpy.matrix([x, y, z]))
-                    ##print(f"{self.root_verts}")
+                    print(f"{self.root_verts}")
 
     """
     The process of drawing the cube will be to take a corner, draw three lines that converge on it
     Repeat for any unique corners that don't cover existing lines
     """
-
-    def draw_cube(self):
+            
+    def draw_cube(self, surface):
         self.surface.fill((255,255,255))
+
+
 
 
 def main():
@@ -106,7 +128,7 @@ def main():
     screen = pygame.display.set_mode(resolution)
 
 
-    cube = Cube(100, 100)
+    cube = Cube(100, [150, 150])
     white = pygame.Color(255, 255, 255)
     running = True
     while running:
@@ -125,7 +147,7 @@ def main():
 
         screen.fill(white)
         ##rain.draw(screen)
-
+        cube.draw_cube(screen)
         pygame.display.flip()
 
         dt = clock.tick(60)
