@@ -6,6 +6,8 @@ class Cube():
     def __init__(self, size, pos):
         self.size = size
         self.pos = pos
+        self.age = 0
+        self.angle = self.age
 
         self.root_verts = []
         self.assign_root_verts()
@@ -25,8 +27,22 @@ class Cube():
         the general rotation matrix and the projection matrix
         Numpy will be used to help handle matrix operations with dot product method.
         """
+        self.calc_rotation(self.angle)
 
-    
+
+        for point in self.root_verts:
+            
+            rmatrix_xyz = numpy.dot(self.rmatrix_z, point.reshape((3, 1)))
+            rmatrix_xyz = numpy.dot(self.rmatrix_y, rmatrix_xyz)
+            rmatrix_xyz = numpy.dot(self.rmatrix_x, rmatrix_xyz)
+
+            print(f"General rotation matrix: {rmatrix_xyz}")
+            points_2d = numpy.dot(self.projection_matrix, rmatrix_xyz)
+            print(f"Points 2d matrix: {points_2d}")
+
+        self.angle += 0.001
+        self.age += 0.001
+
     def calc_rotation(self, angle):
 
         """
@@ -56,6 +72,7 @@ class Cube():
             [0,                         0,  1],
         ])  
 
+        
 
     def assign_root_verts(self):
 
@@ -67,7 +84,7 @@ class Cube():
                     z = int(math.pow(-1, k))
 
                     self.root_verts.append(numpy.matrix([x, y, z]))
-                    print(f"{self.root_verts}")
+                    ##print(f"{self.root_verts}")
 
 
 def main():
@@ -95,7 +112,7 @@ def main():
                    running = False
 
         ##rain.update(dt)
-        
+        cube.update()
 
         screen.fill(white)
         ##rain.draw(screen)
