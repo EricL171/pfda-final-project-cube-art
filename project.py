@@ -111,9 +111,45 @@ class Cube():
     The process of drawing the cube will be to take a corner, draw three lines that converge on it
     Repeat for any unique corners that don't cover existing lines
     """
-            
+
+    def create_edge(self, color, i, j):
+        pygame.draw.line(self.surface, color, 
+            (self.projected_points[i][0], self.projected_points[i][1]), 
+            (self.projected_points[j][0], self.projected_points[j][1]))
+        
     def draw_cube(self, surface):
         self.surface.fill((255,255,255))
+
+        ##for n in range(4):
+            
+        corner_index = 0
+
+        self.create_edge((255, 0, 0), corner_index,   1)
+        self.create_edge((0, 255, 0), corner_index,   4)
+        self.create_edge((0, 0, 255), corner_index, 2)
+
+        
+        corner_index = 3
+        self.create_edge((255, 0, 0), corner_index,   2)
+        self.create_edge((0, 255, 0), corner_index,   1)
+        self.create_edge((0, 0, 255), corner_index, 7)
+        
+
+        
+        corner_index = 5
+        self.create_edge((255, 0, 0), corner_index,   1)
+        self.create_edge((0, 255, 0), corner_index,   7)
+        self.create_edge((0, 0, 255), corner_index, 4)
+        
+
+        
+        corner_index = 6
+        self.create_edge((255, 0, 0), corner_index,   2)
+        self.create_edge((0, 255, 0), corner_index,   4)
+        self.create_edge((0, 0, 255), corner_index, 7)
+        
+        surface.blit(self.surface, (self.pos[0] - math.sqrt(3) * self.size, self.pos[1] - math.sqrt(3) * self.size))
+        ##surface.blit(self.surface, (self.pos[0], self.pos[1]))
 
 
 
