@@ -123,30 +123,19 @@ class Cube():
         ##for n in range(4):
             
         corner_index = 0
+        corners = [0, 3, 5, 6]
+        adj_edges = [1, 2, 4, 7]
+        j = 0
 
-        self.create_edge((255, 0, 0), corner_index,   1)
-        self.create_edge((0, 255, 0), corner_index,   4)
-        self.create_edge((0, 0, 255), corner_index, 2)
-
-        
-        corner_index = 3
-        self.create_edge((255, 0, 0), corner_index,   2)
-        self.create_edge((0, 255, 0), corner_index,   1)
-        self.create_edge((0, 0, 255), corner_index, 7)
-        
-
-        
-        corner_index = 5
-        self.create_edge((255, 0, 0), corner_index,   1)
-        self.create_edge((0, 255, 0), corner_index,   7)
-        self.create_edge((0, 0, 255), corner_index, 4)
-        
-
-        
-        corner_index = 6
-        self.create_edge((255, 0, 0), corner_index,   2)
-        self.create_edge((0, 255, 0), corner_index,   4)
-        self.create_edge((0, 0, 255), corner_index, 7)
+        for i in range(4):
+            self.create_edge((255, 0, 0), corners[i], adj_edges[j  % 4])
+            j += 1
+            
+            self.create_edge((0, 255, 0), corners[i], adj_edges[j  % 4])
+            j+= 1
+            
+            self.create_edge((0, 0, 255), corners[i], adj_edges[j  % 4])
+            j += 1
         
         surface.blit(self.surface, (self.pos[0] - math.sqrt(3) * self.size, self.pos[1] - math.sqrt(3) * self.size))
         ##surface.blit(self.surface, (self.pos[0], self.pos[1]))
