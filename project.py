@@ -1,19 +1,20 @@
+import random
 import pygame
 import numpy
 import math
 
 class Cube():
-    def __init__(self, size, pos):
+    def __init__(self, pos, size, rotation_age):
         self.size = size
         self.pos = pos
         self.age = 0
-        self.angle = self.age
+        self.angle = rotation_age
 
         self.root_verts = []
         self.assign_root_verts()
 
         self.surface = pygame.Surface((2 * math.sqrt(3) * self.size, 2 * math.sqrt(3) * self.size))
-        ##self.surface.set_colorkey((255, 255, 255))
+        self.surface.set_colorkey((255, 255, 255))
 
         self.projection_matrix = numpy.matrix([[1, 0, 0], [0, 1, 0], [0,0,0]])
 
@@ -26,6 +27,14 @@ class Cube():
         ##print(f"Projection {self.projected_points}")
 
     def update(self):
+        self.calc_rotation(self.angle)
+        self.calc_projection()
+        ##self.move_cube()
+        
+        ##self.angle += 0.01
+        self.age += 0.001
+
+    def calc_projection(self):
         """
         https://en.wikipedia.org/wiki/Projection_(linear_algebra)
         Projection will need the dot product of the rotation matrices representing yaw(x), pitch(y), and roll(z) into
@@ -34,9 +43,6 @@ class Cube():
         Numpy will be used to help handle matrix operations with dot product method.
         For clarity purposes, all rotation matrices are named as matrices and are not related to coding matrices or arrays.
         """
-        self.calc_rotation(self.angle)
-        ##print(f"{self.angle}")
-
         i = 0
         for point in self.root_verts:
             
@@ -44,22 +50,13 @@ class Cube():
             rmatrix_xyz = numpy.dot(self.rmatrix_y, rmatrix_xyz)
             rmatrix_xyz = numpy.dot(self.rmatrix_x, rmatrix_xyz)
 
-            ##print(f"General rotation matrix: {rmatrix_xyz}")
             points_2d = numpy.dot(self.projection_matrix, rmatrix_xyz)
-            ##print(f"{points_2d[0][0]}")
-            ##print(f"Points 2d matrix: {points_2d}")
-
-            
-            ##print(f"points {points_2d[0][0]}")
+  
             x = int(points_2d[0][0].item() * self.size) + self.vert_pos[0]
             y = int(points_2d[1][0].item() * self.size) + self.vert_pos[1]
-            
-            ##print(f"x {x}, y {y}, x_1 {x_1}, y_1 {y_1}")
 
             self.projected_points[i] = [x, y]
             i += 1
-        self.angle += 0.001
-        self.age += 0.001
 
     def calc_rotation(self, angle):
 
@@ -70,8 +67,8 @@ class Cube():
         
         self.rotate_x(angle)
         self.rotate_y(angle)
-        self.rotate_z(angle)
-
+        self.rotate_z(0)
+    
     def rotate_x(self, angle):
         ##Gamma, yaw
         self.rmatrix_x = numpy.matrix([
@@ -105,7 +102,7 @@ class Cube():
                     z = int(math.pow(-1, k))
 
                     self.root_verts.append(numpy.matrix([x, y, z]))
-                    print(f"{self.root_verts}")
+                    ##print(f"{self.root_verts}")
 
     """
     The process of drawing the cube will be to take a corner, draw three lines that converge on it
@@ -120,28 +117,65 @@ class Cube():
     def draw_cube(self, surface):
         self.surface.fill((255,255,255))
 
-        ##for n in range(4):
-            
-        corner_index = 0
         corners = [0, 3, 5, 6]
         adj_edges = [1, 2, 4, 7]
         j = 0
 
         for i in range(4):
-            self.create_edge((255, 0, 0), corners[i], adj_edges[j  % 4])
-            j += 1
-            
-            self.create_edge((0, 255, 0), corners[i], adj_edges[j  % 4])
-            j+= 1
-            
-            self.create_edge((0, 0, 255), corners[i], adj_edges[j  % 4])
-            j += 1
-        
+            for n in range(3):
+                self.create_edge((0, 0, 0), corners[i], adj_edges[j  % 4])
+                j += 1
+
         surface.blit(self.surface, (self.pos[0] - math.sqrt(3) * self.size, self.pos[1] - math.sqrt(3) * self.size))
         ##surface.blit(self.surface, (self.pos[0], self.pos[1]))
 
+    def move_cube(self):
+        self.pos[1] += 1
 
+class CubeGrid():
+    def __init__(self, pos, size, angle, resolution):
+        self.pos = pos
+        self.size = size
+        self.angle = angle
+        self.univ_angle = 0
+        self.length = resolution[0]
+        self.width = resolution[1]
+        self.cubes = []
 
+        self.skip = 0
+        self.create_grid()
+
+    def update(self, dt):
+        ##if self.skip % 120 == 0:
+        ##self.create_new_cube()
+
+        self.skip += 1
+
+        for cube in self.cubes:
+            cube.update()
+            cube.angle += 0.01
+            self.univ_angle = cube.angle
+                
+    def create_grid(self):
+        
+        buffer = 2 * math.sqrt(3) * self.size
+        count_x = 0
+        count_y = 0
+        while (count_x * buffer ) < self.length : 
+            while (count_y * buffer) < self.width :
+                cube = Cube(pos = [count_x * buffer, count_y * buffer], size=self.size, rotation_age = self.univ_angle)
+                self.cubes.insert(0, cube)
+                print(f"nnew cu {count_y}")
+                count_y += 1
+            print(f"y {count_y}")
+            count_y = 0
+            count_x +=1
+            print(f"cubes {count_x}")
+    
+
+    def draw(self, surface):
+        for cube in self.cubes:
+            cube.draw_cube(surface)
 
 def main():
     pygame.init()
@@ -149,11 +183,14 @@ def main():
     pygame.display.set_caption("Cube Art")
     clock = pygame.time.Clock()
     dt = 0
-    resolution = (800, 600)
+    ##resolution = (800, 600)
+    resolution = (1920, 1080)
     screen = pygame.display.set_mode(resolution)
 
+    angle = 0
+    cubeTrail = CubeGrid(200, 50, 0, resolution)
+    ##cube = Cube([150, 150], 50)
 
-    cube = Cube(100, [150, 150])
     white = pygame.Color(255, 255, 255)
     running = True
     while running:
@@ -167,12 +204,11 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                    running = False
 
-        ##rain.update(dt)
-        cube.update()
+        cubeTrail.update(dt)
 
         screen.fill(white)
-        ##rain.draw(screen)
-        cube.draw_cube(screen)
+
+        cubeTrail.draw(screen)
         pygame.display.flip()
 
         dt = clock.tick(60)
