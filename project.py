@@ -65,9 +65,9 @@ class Cube():
         Rotation matrices must be defined.
         """
         
-        self.rotate_x(angle)
-        self.rotate_y(angle)
-        self.rotate_z(0)
+        self.rotate_x(angle * math.pi / 180)
+        self.rotate_y(45    * math.pi / 180)
+        self.rotate_z(45     * math.pi / 180)
     
     def rotate_x(self, angle):
         ##Gamma, yaw
@@ -126,6 +126,18 @@ class Cube():
                 self.create_edge((0, 0, 0), corners[i], adj_edges[j  % 4])
                 j += 1
 
+        pygame.draw.circle(self.surface, (0,0,0), (self.projected_points[0][0], self.projected_points[0][1]), 5)
+        pygame.draw.circle(self.surface, (0,0,0), (self.projected_points[1][0], self.projected_points[1][1]), 5)
+        pygame.draw.circle(self.surface, (0,0,0), (self.projected_points[2][0], self.projected_points[2][1]), 5)
+        pygame.draw.circle(self.surface, (0,0,0), (self.projected_points[3][0], self.projected_points[3][1]), 5)
+
+        face1 = [(self.projected_points[0][0],self.projected_points[0][1]), (self.projected_points[1][0], self.projected_points[1][1])
+                 ,(self.projected_points[3][0], self.projected_points[3][1]), (self.projected_points[2][0], self.projected_points[2][1])]
+        
+        ##for i in range(4):
+
+        pygame.draw.polygon(self.surface, (0,0,0), face1)
+        ##pygame.draw.polygon(self.surface, (0,0,0), ((0,0), (150, 100), ( 200, 0)))
         surface.blit(self.surface, (self.pos[0] - math.sqrt(3) * self.size, self.pos[1] - math.sqrt(3) * self.size))
         ##surface.blit(self.surface, (self.pos[0], self.pos[1]))
 
@@ -153,8 +165,9 @@ class CubeGrid():
 
         for cube in self.cubes:
             cube.update()
-            cube.angle += 0.01
+            cube.angle += 1
             self.univ_angle = cube.angle
+            ##self.size_change()
                 
     def create_grid(self):
         
@@ -165,13 +178,18 @@ class CubeGrid():
             while (count_y * buffer) < self.width :
                 cube = Cube(pos = [count_x * buffer, count_y * buffer], size=self.size, rotation_age = self.univ_angle)
                 self.cubes.insert(0, cube)
-                print(f"nnew cu {count_y}")
                 count_y += 1
             print(f"y {count_y}")
             count_y = 0
             count_x +=1
             print(f"cubes {count_x}")
     
+    ##def connect_grid(self):
+        ##for cube in self.cubes:
+
+    def size_change(self):
+        for cube in self.cubes:
+            cube.size -= 0.001
 
     def draw(self, surface):
         for cube in self.cubes:
@@ -183,8 +201,8 @@ def main():
     pygame.display.set_caption("Cube Art")
     clock = pygame.time.Clock()
     dt = 0
-    ##resolution = (800, 600)
-    resolution = (1920, 1080)
+    resolution = (800, 600)
+    ##resolution = (1920, 1080)
     screen = pygame.display.set_mode(resolution)
 
     angle = 0
