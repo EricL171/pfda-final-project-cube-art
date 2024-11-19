@@ -155,11 +155,11 @@ class Cube():
         self.pos[1] += 1
 
 class Plane():
-    def __init__(self, pos, size):
+    def __init__(self, pos, size, rotation):
         self.size = size
         self.pos = pos
         self.age = 0
-        self.angle = 0
+        self.angle = rotation
 
         self.root_verts = []
         self.assign_root_verts()
@@ -175,14 +175,11 @@ class Plane():
         for i in range(len(self.root_verts)):
             self.projected_points.append([i,0])
 
-        ##print(f"Projection {self.projected_points}")
-
     def update(self):
-        self.calc_rotation(self.angle)
+        self.calc_rotation()
         self.calc_projection()
-        ##self.move_cube()
         
-        self.angle += 0.1
+        ##self.angle += 0.1
         self.age += 0.001
 
     def calc_projection(self):
@@ -202,11 +199,11 @@ class Plane():
             self.projected_points[i] = [x, y]
             i += 1
 
-    def calc_rotation(self, angle):
+    def calc_rotation(self):
 
-        self.rotate_x(angle * math.pi / 180)
-        self.rotate_y(45    * math.pi / 180)
-        self.rotate_z(45     * math.pi / 180)
+        self.rotate_x(self.angle[0] * math.pi / 180)
+        self.rotate_y(self.angle[1] * math.pi / 180)
+        self.rotate_z(self.angle[2] * math.pi / 180)
     
     def rotate_x(self, angle):
         ##Gamma, yaw
@@ -233,17 +230,12 @@ class Plane():
 
     def assign_root_verts(self):
 
-        ##for i in range(0, 2):
-            ##for j in range(0, 2):
-                ##x = int(math.pow(-1, i))
-                ##y = int(math.pow(-1, j))
-                ##z = int(math.pow(-1, 0))
+        for i in range(0, 2):
+            for j in range(0, 2):
+                x = int(math.pow(-1, i))
+                y = int(math.pow(-1, j))
+                self.root_verts.append(numpy.matrix([x, y, 0]))
 
-        self.root_verts.append(numpy.matrix([1, 1, 0]))
-        self.root_verts.append(numpy.matrix([1, -1, 0]))
-        self.root_verts.append(numpy.matrix([-1, 1, 0]))
-        self.root_verts.append(numpy.matrix([-1, -1, 0]))
-           
     def create_edge(self, color, i, j):
         pygame.draw.line(self.surface, color, 
             (self.projected_points[i][0], self.projected_points[i][1]), 
@@ -264,23 +256,96 @@ class Plane():
         self.create_edge((0, 0, 0), draw_corners[1], draw_corners[3])
         self.create_edge((0, 0, 0), draw_corners[3], draw_corners[2])
         self.create_edge((0, 0, 0), draw_corners[2], draw_corners[0])
-
+         
         pygame.draw.circle(self.surface, (0,0,0), (self.projected_points[0][0], self.projected_points[0][1]), 5)
         pygame.draw.circle(self.surface, (255,0,0), (self.projected_points[1][0], self.projected_points[1][1]), 5)
         pygame.draw.circle(self.surface, (0,255,0), (self.projected_points[2][0], self.projected_points[2][1]), 5)
         pygame.draw.circle(self.surface, (0,0,255), (self.projected_points[3][0], self.projected_points[3][1]), 5)
 
-        pygame.draw.circle(self.surface, (0,0,0), (math.sqrt(3) * self.size, math.sqrt(3) * self.size), 5)
+        surface.blit(self.surface, (self.pos[0] - math.sqrt(2) * self.size, self.pos[1] - math.sqrt(2) * self.size))
+
+class PlaneGrid():
+    def __init__(self, pos, size, angle, resolution):
+        self.pos = pos
+        self.size = size
+        self.angle = angle
+        self.univ_angle = 0
+        self.length = resolution[0]
+        self.width = resolution[1]
+        self.cubes = []
+
+        self.skip = 0
+        self.create_grid()
+
+    def update(self, dt):
+        ##if self.skip % 120 == 0:
+        ##self.create_new_cube()
+
+        self.skip += 1
+
+        for cube in self.cubes:
+            cube.update()
+            cube.angle += 1
+            self.univ_angle = cube.angle
+            ##self.size_change()
+                
+    def create_grid(self):
         
-        ##print(f"{}")
-        ##for i in range(4):
-            ##self.create_edge((0, 0, 0), draw_corners[i], adj_edges[j])
-            ##j += 1
+        buffer = 2 * math.sqrt(2) * self.size
+        count_x = 0
+        count_y = 0
+        while (count_x * buffer ) < self.length : 
+            while (count_y * buffer) < self.width :
+                cube = Plane(pos = [count_x * buffer, count_y * buffer], size=self.size, rotation = [90,0,0])
+                self.cubes.insert(0, cube)
+                count_y += 1
+
+            count_y = 0
+            count_x +=1
+
+
+    def draw(self, surface):
+        for cube in self.cubes:
+            cube.draw(surface)
+
+class PlaneCascade():
+    def __init__(self, resolution):
         
-        surface.blit(self.surface, (self.pos[0] - math.sqrt(3) * self.size, self.pos[1] - math.sqrt(3) * self.size))
+        self.length = resolution[0]
+        self.width = resolution[1]
+        self.cubes = []
 
+        self.skip = 0
+        self.create_cascade()
 
+    def update(self, dt):
+        ##if self.skip % 120 == 0:
+        ##self.create_new_cube()
 
+        self.skip += 1
+
+        for cube in self.cubes:
+            cube.update()
+            ##cube.angle += 1
+            
+            self.univ_angle = cube.angle
+            ##self.size_change()
+                
+    def create_cascade(self):
+
+        cube = Plane(pos = [self.length * 0.8, self.width * 0.2], size=50, rotation = [90, 0, 0])
+        self.cubes.insert(0, cube)
+
+        cube = Plane(pos = [self.length * 0.7, self.width * 0.3], size=50, rotation = [85, 10, 0])
+        self.cubes.insert(0, cube)
+
+        cube = Plane(pos = [self.length * 0.6, self.width * 0.4], size=50, rotation = [20, 0, 0])
+        self.cubes.insert(0, cube)
+
+    def draw(self, surface):
+        for cube in self.cubes:
+            cube.draw(surface)
+            
 class CubeGrid():
     def __init__(self, pos, size, angle, resolution):
         self.pos = pos
@@ -345,7 +410,7 @@ def main():
     angle = 0
     cubeTrail = CubeGrid(200, 50, 0, resolution)
     ##cube = Cube([150, 150], 50)
-    plane1 = Plane([150,150], 50)
+    plane1 = PlaneCascade(resolution)
 
     white = pygame.Color(255, 255, 255)
     running = True
@@ -409,7 +474,7 @@ def main():
         run3 = states[2]
         """
         screen.fill(white)
-        plane1.update()
+        plane1.update(dt)
         plane1.draw(screen)
 
 
