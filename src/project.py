@@ -83,8 +83,7 @@ class Cube():
             [math.cos(angle),  0, math.sin(angle)],
             [0,                1,               0],
             [-math.sin(angle), 0, math.cos(angle)],
-        ])
-        
+        ])     
     def rotate_z(self, angle):
         ##Alpha, roll
         self.rmatrix_z = numpy.matrix([
@@ -218,8 +217,7 @@ class Plane():
             [math.cos(angle),  0, math.sin(angle)],
             [0,                1,               0],
             [-math.sin(angle), 0, math.cos(angle)],
-        ])
-        
+        ])     
     def rotate_z(self, angle):
         ##Alpha, roll
         self.rmatrix_z = numpy.matrix([
@@ -257,12 +255,23 @@ class Plane():
         self.create_edge((0, 0, 0), draw_corners[3], draw_corners[2])
         self.create_edge((0, 0, 0), draw_corners[2], draw_corners[0])
          
-        pygame.draw.circle(self.surface, (0,0,0), (self.projected_points[0][0], self.projected_points[0][1]), 5)
-        pygame.draw.circle(self.surface, (255,0,0), (self.projected_points[1][0], self.projected_points[1][1]), 5)
-        pygame.draw.circle(self.surface, (0,255,0), (self.projected_points[2][0], self.projected_points[2][1]), 5)
-        pygame.draw.circle(self.surface, (0,0,255), (self.projected_points[3][0], self.projected_points[3][1]), 5)
-
+        
+        ##pygame.draw.circle(self.surface, (0,0,0), (self.projected_points[0][0], self.projected_points[0][1]), 5)
+        
+        ##surface.blit(self.surface, (self.pos[0] - math.sqrt(2) * self.size, self.pos[1] - math.sqrt(2) * self.size))
         surface.blit(self.surface, (self.pos[0] - math.sqrt(2) * self.size, self.pos[1] - math.sqrt(2) * self.size))
+
+class Point():
+    def __init__(self, pos, size, color):
+        self.pos = pos
+        self.size = size
+        self.color = color
+
+    def draw(self, surface):
+        
+        pygame.draw.circle(surface, self.color, self.pos, self.size)
+
+
 
 class PlaneGrid():
     def __init__(self, pos, size, angle, resolution):
@@ -316,6 +325,12 @@ class PlaneCascade():
         self.cubes = []
 
         self.skip = 0
+        self.xpos = []
+        self.ypos = []
+        self.rotations = []
+        self.sizes = []
+
+        self.casc_length = 13 
         self.create_cascade()
 
     def update(self, dt):
@@ -330,22 +345,80 @@ class PlaneCascade():
             
             self.univ_angle = cube.angle
             ##self.size_change()
-                
+    
+    def calc_transforms(self):
+    
+        
+        for idx in range(self.casc_length):
+            
+            x_line = self.length /(self.casc_length+5) * idx 
+            y_line = math.sqrt((self.width * idx))
+
+            self.xpos.append(x_line)
+            self.ypos.append(y_line)
+            self.rotations.append([90 * (1 - 1 * idx/self.casc_length), 0, 90 * (1 - 1 * idx/self.casc_length)])
+            
+        
     def create_cascade(self):
 
+        self.calc_transforms()
+        for idx in range(self.casc_length):
+            cube = Plane(pos = [self.xpos[idx], self.ypos[idx]], size=50 + 10 * idx, rotation = self.rotations[idx])
+            
+            self.cubes.insert(0, cube)
+
+        
         cube = Plane(pos = [self.length * 0.8, self.width * 0.2], size=50, rotation = [90, 0, 0])
         self.cubes.insert(0, cube)
 
-        cube = Plane(pos = [self.length * 0.7, self.width * 0.3], size=50, rotation = [85, 10, 0])
+        cube = Plane(pos = [self.length * 0.7, self.width * 0.3], size=50, rotation = [85, 0, 40])
         self.cubes.insert(0, cube)
 
-        cube = Plane(pos = [self.length * 0.6, self.width * 0.4], size=50, rotation = [20, 0, 0])
+        cube = Plane(pos = [self.length * 0.6, self.width * 0.4], size=50, rotation = [0, 00, 90])
         self.cubes.insert(0, cube)
+        
 
     def draw(self, surface):
         for cube in self.cubes:
             cube.draw(surface)
-            
+
+class PointGrid():
+    def __init__(self, resolution):
+
+        self.length = resolution[0]
+        self.width = resolution[1]
+        self.points = []
+        self.surf = pygame.Surface(resolution)
+        self.surf.fill((255,255,255))
+        ##pygame.draw.circle(self.surf, (0,0,0), (0,0), 50)
+        self.skip = 0
+        self.create_grid()
+
+    def update(self, dt, surface):
+        
+        for point in self.points:
+            point.draw(self.surf)
+            ##point.size += 1
+            ##self.size_change()
+        surface.blit(self.surf, (0,0))
+                
+    def create_grid(self):
+        
+        buffer = 20
+        count_x = 0
+        count_y = 0
+        while (count_x * buffer ) <= self.length : 
+            while (count_y * buffer) <= self.width :
+                point = Point((count_x * buffer, count_y * buffer), 5, (0,0,0))
+                self.points.insert(0, point)
+                count_y += 1
+            count_x += 1
+            count_y = 0
+            print(f"new column {count_x * buffer}")
+    
+    ##def connect_grid(self):
+        ##for cube in self.cubes:
+
 class CubeGrid():
     def __init__(self, pos, size, angle, resolution):
         self.pos = pos
@@ -411,6 +484,7 @@ def main():
     cubeTrail = CubeGrid(200, 50, 0, resolution)
     ##cube = Cube([150, 150], 50)
     plane1 = PlaneCascade(resolution)
+    points = PointGrid(resolution)
 
     white = pygame.Color(255, 255, 255)
     running = True
@@ -474,9 +548,11 @@ def main():
         run3 = states[2]
         """
         screen.fill(white)
-        plane1.update(dt)
-        plane1.draw(screen)
+        ##plane1.update(dt)
+        ##plane1.draw(screen)
+        points.update(dt, screen)
 
+        ##pygame.draw.circle(screen, (0,0,0), (50,50), 50)
 
         dt = clock.tick(60)
         pygame.display.update()
