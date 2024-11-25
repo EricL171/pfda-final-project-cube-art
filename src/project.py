@@ -9,7 +9,7 @@ class Cube():
         self.size = size
         self.pos = pos
         self.age = 0
-        self.angle = start_rotation
+        self.angle = list(start_rotation)
 
         self.root_verts = []
         self.assign_root_verts()
@@ -440,7 +440,8 @@ class CubeGrid():
 
         for cube in self.cubes:
             cube.update()
-            cube.angle += 1
+            cube.angle[0] += 1
+            cube.angle[1] += 1
             self.univ_angle = cube.angle
             ##self.size_change()
                 
@@ -484,26 +485,27 @@ def main():
 
     mouse_pos = (resolution[0]/2, resolution[1]/2)
     mouse_rel = (0,0)
-    angle = 0
+    mouse_hold = False
+    mouse_scroll = 0
+    mouse_button_state = pygame.mouse.get_pressed(3)
+    mouse_motion_state = ()
+
     cubeTrail = CubeGrid(200, 50, 0, resolution)
-    cube = Cube([150, 150], 50, (20, 10, 0))
+    cube = Cube([resolution[0]/2, resolution[1]/2], 50, (20, 10, 0))
     plane1 = PlaneCascade(resolution)
     points = PointGrid(resolution)
 
     white = pygame.Color(255, 255, 255)
     running = True
-    start = True
-    run1 = False
-    run3 = False
-    states = [start, run1, run3]
+    states = [True, False, False, False, False, False, False, False, False, False]
 
-    mouse_hold = False
     pygame.mouse.set_pos(mouse_pos)
     ##surface = pygame.Surface((size=resolution, flags=0, depth=0, display=0, vsync=0))
 
     while running:
 
-        pygame.key.set_repeat(100)
+        ##pygame.key.set_repeat(100)
+        pygame.display.flip()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -515,33 +517,76 @@ def main():
                     case pygame.K_0:
                         change_state(states)
                         states[0] = True
+                        print(event)
+
                     case pygame.K_1:
                         change_state(states)
                         states[1] = True
+                        print(event)
 
                     case pygame.K_2:
                         change_state(states)
                         states[2] = True
+                        print(event)
 
                     case pygame.K_3:
                         change_state(states)
                         states[3] = True
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_hold = True
-                mouse_rel = pygame.mouse.get_pos()
-                print(f"mouse_rel {mouse_rel}")
-
-                
-            if event.type == pygame.MOUSEBUTTONUP:
-                mouse_hold = False
+                        print(event)
             
-            if mouse_hold:
-                if event.type == pygame.MOUSEMOTION:
-                    pygame.mouse.get_pressed(3)
-                    mouse_pos = pygame.mouse.get_pos()
-                    print(f"{mouse_pos}")
-                
+            if states[1]:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_button_state = pygame.mouse.get_pressed(3)
+                    if mouse_button_state[0] == True:
+                        mouse_hold = True
+                        mouse_rel = (0, 0)
+                        
+                if event.type == pygame.MOUSEBUTTONUP:
+                    mouse_button_state = pygame.mouse.get_pressed(3)
+                    if mouse_button_state[0] == False:
+                        mouse_hold = False
+                        ##mouse_rel = (0, 0)
 
+                if event.type == pygame.MOUSEWHEEL:
+                    mouse_scroll = event.y
+                        
+                if event.type == pygame.MOUSEMOTION:   
+                    if mouse_hold == True:                   
+                        mouse_rel = pygame.mouse.get_rel()
+                        
+                
+                        
+                        
+
+        if states[0]:
+            
+            screen.fill(white)
+            ##path = os.path.join("pfda-final-project-cube-art\src\placeholder2.png")
+            startscreen = pygame.image.load("placeholder.png")
+            pygame.transform.scale(startscreen, resolution, screen)
+            ##screen.blit(startscreen, (0, 0))
+        if states[1]:
+            
+            CubeControl(cube, resolution, mouse_rel, mouse_scroll)
+            if pygame.mouse.get_rel() == (0, 0) and mouse_hold:
+                mouse_rel = (0, 0)
+
+            screen.fill(white)
+            cube.update()
+            cube.draw_cube(screen)
+            mouse_scroll = 0
+
+        if states[2]:
+            screen.fill(white)
+
+            cubeTrail.update(dt)
+            cubeTrail.draw(screen)
+        
+        if states[3]:
+            screen.fill(white)
+            plane1.update(dt)
+            plane1.draw(screen)
+            
         """              
         print(f"state {states}")
         screen.fill(white)
@@ -557,7 +602,13 @@ def main():
         if run0 == True:
             screen.fill(white)
 
-            
+        if run1 == True:
+            screen.fill(white)
+
+            cube.update()
+            cube.draw_cube(screen)
+
+
         if run2 == True:
             screen.fill(white)
 
@@ -569,8 +620,6 @@ def main():
             screen.fill(white)
             plane1.update()
             plane1.draw()
-        if run4 == True:
-            screen.fill(white)
             
         pygame.display.flip()
         
@@ -581,9 +630,6 @@ def main():
         run1 = states[1]
         run3 = states[2]
         """
-
-    
-        screen.fill(white)
         
         """
         plane1.update(dt)
@@ -591,26 +637,32 @@ def main():
         points.update(dt, screen)
         """
 
-        cube.update()
-        cube.draw_cube(screen)
+        ##cube.update()
+        ##cube.draw_cube(screen)
 
-        CubeControl(cube, resolution, mouse_pos, mouse_rel )
         ##pygame.draw.circle(screen, (0,0,0), (50,50), 50)
 
         dt = clock.tick(60)
+        mouse_pos = pygame.mouse.get_pos()
         pygame.display.update()
     pygame.quit()
+    print("Exiting program...")
 
 def change_state(state):
     for idx, cond in enumerate(state):
         state[idx] = False
 
-def CubeControl(cube, resolution, mouse_pos, mouse_rel):
-    x = 180 * abs(mouse_pos[0] - mouse_rel[0])/ resolution[0]
-    y = 180 * abs(mouse_pos[1] - mouse_rel[1])/ resolution[1]
+def CubeControl(cube, resolution, pos_diff, scroll):
+    
+    x = -180 * (pos_diff[1])/ resolution[1]
+    y = 180 * (pos_diff[0])/ resolution[0]
     z = 180 * 0
-    print(f"x {x}")
-    cube.angle =(x,y,z)
+
+    cube.angle[0] += x
+    cube.angle[1] += y
+    cube.angle[2] += z
+
+    ##cube.size += scroll
 
 if __name__ == "__main__":
     main()
