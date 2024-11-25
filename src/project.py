@@ -5,11 +5,11 @@ import numpy
 import math
 
 class Cube():
-    def __init__(self, pos, size, rotation_age):
+    def __init__(self, pos, size, start_rotation):
         self.size = size
         self.pos = pos
         self.age = 0
-        self.angle = rotation_age
+        self.angle = start_rotation
 
         self.root_verts = []
         self.assign_root_verts()
@@ -66,9 +66,9 @@ class Cube():
         Rotation matrices must be defined.
         """
         
-        self.rotate_x(angle * math.pi / 180)
-        self.rotate_y(45    * math.pi / 180)
-        self.rotate_z(45     * math.pi / 180)
+        self.rotate_x(angle[0] * math.pi / 180)
+        self.rotate_y(angle[1] * math.pi / 180)
+        self.rotate_z(angle[2] * math.pi / 180)
     
     def rotate_x(self, angle):
         ##Gamma, yaw
@@ -130,6 +130,11 @@ class Cube():
                 self.create_edge((0, 0, 0), draw_corners[i], adj_edges[j  % 4])
                 j += 1
 
+        ##self.shade_cube(corners)
+        surface.blit(self.surface, (self.pos[0] - math.sqrt(3) * self.size, self.pos[1] - math.sqrt(3) * self.size))
+        ##surface.blit(self.surface, (self.pos[0], self.pos[1]))
+
+    def shade_cube(self, corners):
         face1 = [corners[0], corners[1], corners[3], corners[2]]
         face2 = [corners[0], corners[4], corners[6], corners[2]]
         face3 = [corners[2], corners[3], corners[7], corners[6]]
@@ -147,8 +152,6 @@ class Cube():
             pygame.draw.polygon(self.surface, (0,0,0), faces[i])
 
         ##pygame.draw.polygon(self.surface, (0,0,0), ((0,0), (150, 100), ( 200, 0)))
-        surface.blit(self.surface, (self.pos[0] - math.sqrt(3) * self.size, self.pos[1] - math.sqrt(3) * self.size))
-        ##surface.blit(self.surface, (self.pos[0], self.pos[1]))
 
     def move_cube(self):
         self.pos[1] += 1
@@ -163,12 +166,12 @@ class Plane():
         self.root_verts = []
         self.assign_root_verts()
 
-        self.surface = pygame.Surface((2 * math.sqrt(3) * self.size, 2 * math.sqrt(3) * self.size))
+        self.surface = pygame.Surface((2*math.sqrt(2) * self.size, 2*math.sqrt(2) * self.size))
         self.surface.set_colorkey((255, 255, 255))
 
         self.projection_matrix = numpy.matrix([[1, 0, 0], [0, 1, 0], [0,0,0]])
 
-        self.vert_pos = [math.sqrt(3) * self.size, math.sqrt(3) * self.size]
+        self.vert_pos = [math.sqrt(2) * self.size, math.sqrt(2) * self.size]
         
         self.projected_points = []
         for i in range(len(self.root_verts)):
@@ -271,8 +274,6 @@ class Point():
         
         pygame.draw.circle(surface, self.color, self.pos, self.size)
 
-
-
 class PlaneGrid():
     def __init__(self, pos, size, angle, resolution):
         self.pos = pos
@@ -322,65 +323,63 @@ class PlaneCascade():
         
         self.length = resolution[0]
         self.width = resolution[1]
-        self.cubes = []
+        self.planes = []
 
         self.skip = 0
         self.xpos = []
         self.ypos = []
         self.rotations = []
         self.sizes = []
+        self.start_size = 50
 
-        self.casc_length = 13 
+        self.casc_length =5
         self.create_cascade()
 
     def update(self, dt):
-        ##if self.skip % 120 == 0:
-        ##self.create_new_cube()
+        
+        ##self.casc_length += 1
 
-        self.skip += 1
-
-        for cube in self.cubes:
-            cube.update()
+        for plane in self.planes:
+            plane.update()
             ##cube.angle += 1
             
-            self.univ_angle = cube.angle
+            self.univ_angle = plane.angle
             ##self.size_change()
+        self.create_cascade()
     
     def calc_transforms(self):
-    
         
+        x_line = 0
+        y_line = 0
+
         for idx in range(self.casc_length):
             
-            x_line = self.length /(self.casc_length+5) * idx 
-            y_line = math.sqrt((self.width * idx))
+            calc_res = math.pow(self.width, 2) / self.length
 
+            print(f"{calc_res}")
+            x_line = self.length /(self.casc_length+5) * idx + self.start_size
+            y_line = math.sqrt((calc_res * x_line))
+
+            
             self.xpos.append(x_line)
             self.ypos.append(y_line)
-            self.rotations.append([90 * (1 - 1 * idx/self.casc_length), 0, 90 * (1 - 1 * idx/self.casc_length)])
-            
+            self.rotations.append([90 * (1 - 1 * idx/self.casc_length), 0, 45 * (1 - 1 * idx/self.casc_length)])
         
     def create_cascade(self):
 
         self.calc_transforms()
         for idx in range(self.casc_length):
-            cube = Plane(pos = [self.xpos[idx], self.ypos[idx]], size=50 + 10 * idx, rotation = self.rotations[idx])
+            plane = Plane(pos = [self.xpos[idx], self.ypos[idx]], size=self.start_size + 10 * idx, rotation = self.rotations[idx])
             
-            self.cubes.insert(0, cube)
-
-        
-        cube = Plane(pos = [self.length * 0.8, self.width * 0.2], size=50, rotation = [90, 0, 0])
-        self.cubes.insert(0, cube)
-
-        cube = Plane(pos = [self.length * 0.7, self.width * 0.3], size=50, rotation = [85, 0, 40])
-        self.cubes.insert(0, cube)
-
-        cube = Plane(pos = [self.length * 0.6, self.width * 0.4], size=50, rotation = [0, 00, 90])
-        self.cubes.insert(0, cube)
+            self.planes.insert(0, plane)
         
 
     def draw(self, surface):
-        for cube in self.cubes:
-            cube.draw(surface)
+        for plane in self.planes:
+            plane.draw(surface)
+
+##class PlaneTrail():
+    ##def
 
 class PointGrid():
     def __init__(self, resolution):
@@ -390,6 +389,8 @@ class PointGrid():
         self.points = []
         self.surf = pygame.Surface(resolution)
         self.surf.fill((255,255,255))
+        self.surf.set_colorkey((255, 255, 255))
+
         ##pygame.draw.circle(self.surf, (0,0,0), (0,0), 50)
         self.skip = 0
         self.create_grid()
@@ -409,12 +410,11 @@ class PointGrid():
         count_y = 0
         while (count_x * buffer ) <= self.length : 
             while (count_y * buffer) <= self.width :
-                point = Point((count_x * buffer, count_y * buffer), 5, (0,0,0))
+                point = Point((count_x * buffer, count_y * buffer), 1, (0,0,0))
                 self.points.insert(0, point)
                 count_y += 1
             count_x += 1
             count_y = 0
-            print(f"new column {count_x * buffer}")
     
     ##def connect_grid(self):
         ##for cube in self.cubes:
@@ -424,7 +424,7 @@ class CubeGrid():
         self.pos = pos
         self.size = size
         self.angle = angle
-        self.univ_angle = 0
+        self.univ_angle = (0, 0, 0)
         self.length = resolution[0]
         self.width = resolution[1]
         self.cubes = []
@@ -451,7 +451,7 @@ class CubeGrid():
         count_y = 0
         while (count_x * buffer ) < self.length : 
             while (count_y * buffer) < self.width :
-                cube = Cube(pos = [count_x * buffer, count_y * buffer], size=self.size, rotation_age = self.univ_angle)
+                cube = Cube(pos = [count_x * buffer, count_y * buffer], size=self.size, start_rotation = self.univ_angle)
                 self.cubes.insert(0, cube)
                 count_y += 1
             ##print(f"y {count_y}")
@@ -470,6 +470,8 @@ class CubeGrid():
         for cube in self.cubes:
             cube.draw_cube(surface)
 
+##class Circle():
+
 def main():
     pygame.init()
 
@@ -480,9 +482,11 @@ def main():
     ##resolution = (1920, 1080)
     screen = pygame.display.set_mode(resolution)
 
+    mouse_pos = (resolution[0]/2, resolution[1]/2)
+    mouse_rel = (0,0)
     angle = 0
     cubeTrail = CubeGrid(200, 50, 0, resolution)
-    ##cube = Cube([150, 150], 50)
+    cube = Cube([150, 150], 50, (20, 10, 0))
     plane1 = PlaneCascade(resolution)
     points = PointGrid(resolution)
 
@@ -493,6 +497,8 @@ def main():
     run3 = False
     states = [start, run1, run3]
 
+    mouse_hold = False
+    pygame.mouse.set_pos(mouse_pos)
     ##surface = pygame.Surface((size=resolution, flags=0, depth=0, display=0, vsync=0))
 
     while running:
@@ -506,17 +512,35 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                    running = False
                 match event.key:
+                    case pygame.K_0:
+                        change_state(states)
+                        states[0] = True
                     case pygame.K_1:
                         change_state(states)
                         states[1] = True
 
                     case pygame.K_2:
                         change_state(states)
-                        states[0] = True
+                        states[2] = True
 
                     case pygame.K_3:
                         change_state(states)
-                        states[2] = True
+                        states[3] = True
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_hold = True
+                mouse_rel = pygame.mouse.get_pos()
+                print(f"mouse_rel {mouse_rel}")
+
+                
+            if event.type == pygame.MOUSEBUTTONUP:
+                mouse_hold = False
+            
+            if mouse_hold:
+                if event.type == pygame.MOUSEMOTION:
+                    pygame.mouse.get_pressed(3)
+                    mouse_pos = pygame.mouse.get_pos()
+                    print(f"{mouse_pos}")
+                
 
         """              
         print(f"state {states}")
@@ -530,7 +554,11 @@ def main():
             pygame.transform.scale(startscreen, resolution, screen)
             ##screen.blit(startscreen, (0, 0))
         
-        if run1 == True:
+        if run0 == True:
+            screen.fill(white)
+
+            
+        if run2 == True:
             screen.fill(white)
 
             cubeTrail.update(dt)
@@ -541,17 +569,32 @@ def main():
             screen.fill(white)
             plane1.update()
             plane1.draw()
+        if run4 == True:
+            screen.fill(white)
+            
         pygame.display.flip()
         
+        if run4 == True:
+            screen.fill(white)
+            
         start = states[0]
         run1 = states[1]
         run3 = states[2]
         """
-        screen.fill(white)
-        ##plane1.update(dt)
-        ##plane1.draw(screen)
-        points.update(dt, screen)
 
+    
+        screen.fill(white)
+        
+        """
+        plane1.update(dt)
+        plane1.draw(screen)
+        points.update(dt, screen)
+        """
+
+        cube.update()
+        cube.draw_cube(screen)
+
+        CubeControl(cube, resolution, mouse_pos, mouse_rel )
         ##pygame.draw.circle(screen, (0,0,0), (50,50), 50)
 
         dt = clock.tick(60)
@@ -562,6 +605,12 @@ def change_state(state):
     for idx, cond in enumerate(state):
         state[idx] = False
 
+def CubeControl(cube, resolution, mouse_pos, mouse_rel):
+    x = 180 * abs(mouse_pos[0] - mouse_rel[0])/ resolution[0]
+    y = 180 * abs(mouse_pos[1] - mouse_rel[1])/ resolution[1]
+    z = 180 * 0
+    print(f"x {x}")
+    cube.angle =(x,y,z)
 
 if __name__ == "__main__":
     main()
