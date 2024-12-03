@@ -459,7 +459,6 @@ class CubeGrid():
         self.skip = 0
         self.create_grid()
         
-
     def update(self, dt):
         ##if self.skip % 120 == 0:
         ##self.create_new_cube()
@@ -526,7 +525,6 @@ def main():
     
     points = PointGrid(resolution)
 
-
     white = pygame.Color(255, 255, 255)
     black = pygame.Color(0, 0, 0)
     running = True
@@ -575,6 +573,7 @@ def main():
                     
                     case pygame.K_4:
                         change_state(states, screen)
+                        screen.fill(white)
                         states[4] = True
                         if dbg_msg:
                             print(event)
@@ -603,8 +602,6 @@ def main():
                         if dbg_msg:
                             print(event)
                             print("This button does nothing!")
-            
-            
 
             if states[1]:
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -616,7 +613,6 @@ def main():
                     if mouse_button_state[2] == True:
                         mouse_rhold = True
                         mouse_rel = (0, 0)
-                    
                         
                 if event.type == pygame.MOUSEBUTTONUP:
                     mouse_button_state = pygame.mouse.get_pressed(3)
@@ -631,7 +627,6 @@ def main():
                     if mouse_rhold == True:                   
                         mouse_rel = pygame.mouse.get_rel()
                         
-
             if states[4]:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
@@ -643,7 +638,6 @@ def main():
                         planeTrail = PlaneTrail(resolution, mouse_pos, 25)
                         plane_trails_04.insert(0, planeTrail)
                         ##plane_trails_04.append()
-                             
 
         if enable_grid:
             points.update(dt, screen)
@@ -666,10 +660,8 @@ def main():
 
         if states[1]:
             
-            pos_text = "X: " + str(cube_01.angle[0]) + " Y: " + str(cube_01.angle[1]) + " Z: " + str(cube_01.angle[2])
-            print(pos_text)
-            my_font = pygame.font.SysFont("Courier", 150)  
-            text_surf = my_font.render(pos_text, False, black)  
+            angle_x = round(cube_01.angle[0], 4)
+            angle_y = round(cube_01.angle[1], 4)
 
             CubeControl(cube_01, resolution, mouse_rel, mouse_scroll)
             if pygame.mouse.get_rel() == (0, 0) and mouse_rhold:
@@ -679,10 +671,18 @@ def main():
             cube_01.update()
             cube_01.draw_cube(screen)
 
-            text_pos = "X: " + str(cube_01.angle[0]) + " Y: " + str(cube_01.angle[1]) + " Z: " + str(cube_01.angle[2])
+            pos_text_x = "X: " + str(angle_x)
+            pos_text_y = "Y: " + str(angle_y)
+            pos_text_z = "Z: " + str(cube_01.angle[2])
             my_font = pygame.font.SysFont("Courier", 10)  
-            text_surf = my_font.render(text_pos, False, black)  
-            screen.blit(text_surf, (5, 10))
+
+            text_surf_x = my_font.render(pos_text_x, False, black)
+            text_surf_y = my_font.render(pos_text_y, False, black)  
+            text_surf_z = my_font.render(pos_text_z, False, black)   
+  
+            screen.blit(text_surf_x, (5, 10))
+            screen.blit(text_surf_y, (5, 20))
+            screen.blit(text_surf_z, (5, 30))
             mouse_scroll = 0
 
         if states[2]:
@@ -704,7 +704,6 @@ def main():
                 trails.update(dt)
                 trails.draw(screen)
         
-
         ##cube.update()
         ##cube.draw_cube(screen)
 
