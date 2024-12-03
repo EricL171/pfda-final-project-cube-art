@@ -1,3 +1,5 @@
-math
+random
+os
 pygame
-pillow
+numpy
+math
