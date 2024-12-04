@@ -27,14 +27,10 @@ class Cube():
         for i in range(len(self.root_verts)):
             self.projected_points.append([i,0])
 
-        ##print(f"Projection {self.projected_points}")
-
     def update(self):
         self.calc_rotation(self.angle)
         self.calc_projection()
-        ##self.move_cube()
-        
-        ##self.angle += 0.01
+
         self.age += 0.001
 
     def calc_projection(self):
@@ -507,9 +503,10 @@ def main():
     clock = pygame.time.Clock()
     dt = 0
     dbg_msg = False
-    resolution = (1200, 800)
-    ##resolution = (1920, 1080)
+    ##resolution = (1200, 800)
+    resolution = (1920, 1200)
     screen = pygame.display.set_mode(resolution)
+    pygame.display.toggle_fullscreen()
 
     mouse_pos = (resolution[0]/2, resolution[1]/2)
     mouse_rel = (0,0)
@@ -639,8 +636,7 @@ def main():
                         plane_trails_04.insert(0, planeTrail)
                         ##plane_trails_04.append()
 
-        if enable_grid:
-            points.update(dt, screen)
+       
 
         """
         if dbg_msg:
@@ -704,6 +700,8 @@ def main():
                 trails.update(dt)
                 trails.draw(screen)
         
+        if enable_grid:
+            points.update(dt, screen)
         ##cube.update()
         ##cube.draw_cube(screen)
 
